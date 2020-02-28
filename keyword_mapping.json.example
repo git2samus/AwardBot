@@ -1,0 +1,11 @@
+{
+    "<keyword-1>": [
+        "<img-url1>",
+        "<img-url2>"
+    ],
+    "<keyword-2>": [
+        "<img-url1>",
+        "<img-url2>",
+        "<img-url3>"
+    ]
+}
