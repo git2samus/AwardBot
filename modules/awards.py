@@ -1,6 +1,6 @@
 import re, json, random, string
-from unidecode import unidecode
 from modules.shared.base import APIProcess
+from modules.shared.utils import normalize_str
 
 
 class AwardBotProcess(APIProcess):
@@ -8,24 +8,33 @@ class AwardBotProcess(APIProcess):
         # setup PRAW, db and http session
         super().__init__(source_version)
 
+        # internal variables
         self.subreddit_name = subreddit_name
 
+        # prepare search patterns and keyword info
+        negate_char_config = self.reddit.config.custom['bot_negate_char']
+        negate_char = re.escape(negate_char_config)
+        negated_keyword_pattern = f'(?P<negated>{negate_char})'
+
         with open('keyword_mapping.json') as json_file:
-            self.keyword_mapping = json.load(json_file)
+            self.keyword_mapping = {
+                normalize_str(key): value
+                for key, value in json.load(json_file).items()
+            }
 
-        keywords = map(unidecode, self.keyword_mapping.keys())
         keyword_join = '|'.join(
-            re.escape(keyword) for keyword in keywords
+            re.escape(keyword) for keyword in self.keyword_mapping.keys()
         )
+        keyword_join_pattern = f'(?P<keyword>{keyword_join})'
 
-        negate_char = re.escape('\\')
-        keyword_pattern = '{}{}{}'.format(
-            f'(?P<negated>{negate_char})?',
-            f'(?P<keyword>{keyword_join})',
-            f'(?:[{string.punctuation}])?',
+        punctuation_pattern = '(?:[{}])'.format(re.escape(string.punctuation))
+
+        keyword_pattern = '{negated}?{keyword}{punctuation}?'.format(
+            negated=negated_keyword_pattern,
+            keyword=keyword_join_pattern,
+            punctuation=punctuation_pattern,
         )
-
-        self.keyword_re = re.compile(keyword_pattern, re.IGNORECASE)
+        self.keyword_re = re.compile(keyword_pattern)
 
     def add_reply(self, comment, matched_keywords):
         print(f'@@@ {matched_keywords}')
@@ -37,18 +46,17 @@ class AwardBotProcess(APIProcess):
         # ignored users (bots and such)
         blacklist_config = self.reddit.config.custom['bot_comments_blacklist']
         blacklist = {
-            name.strip().lower() for name in blacklist_config.split(',')
+            name.strip() for name in normalize_str(blacklist_config).split(',')
         }
 
         # process submissions
         subreddit = self.reddit.subreddit(self.subreddit_name)
         for comment in subreddit.stream.comments(skip_existing=True):
-            print([comment.author, comment.body])
-            # Use .name to avoid another API call
-            if comment.author.name.lower() not in blacklist:
-                tokens = comment.body.split()
-                matches = map(self.keyword_re.fullmatch, tokens)
+            # Use author.name to avoid another API call
+            if normalize_str(comment.author.name) not in blacklist:
+                tokens = normalize_str(comment.body).split()
 
+                matches = map(self.keyword_re.fullmatch, tokens)
                 matched_keywords = {
                     match['keyword'] for match in matches
                     if match is not None and match['negated'] is None

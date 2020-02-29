@@ -30,7 +30,7 @@ if __name__ == '__main__':
     if database_url is None:
         raise DocoptExit("Missing DATABASE_URL variable.\n")
 
-    # we'll use the lowercase variant of PRAW_SITE as the reference since that's what praw uses
+    # we use uppercase for consistency but convert it to lowercase since that's what PRAW uses
     praw_site = os.getenv('PRAW_SITE')
     if praw_site is not None:
         os.environ['praw_site'] = praw_site

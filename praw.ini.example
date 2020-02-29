@@ -14,6 +14,8 @@ bot_version=<bot-version>
 bot_author=<bot-author>
 user_agent=script:%(bot_name)s:v%(bot_version)s (by /u/%(bot_author)s)
 
+# Character prefix used to ignore keywords on comments, e.g. \
+bot_negate_char=<negate-char>
 # Reset day: Monday == 0 ... Sunday == 6
 bot_reset_day=<reset-day-number>
 # Comma-separated list of users to ignore when checking keywords
