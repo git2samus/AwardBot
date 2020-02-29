@@ -1,0 +1,3 @@
+[Here's your {{award_singular}}]({{image_url}}), /u/{{recipient}}!
+
+^({{recipient}} has received {% if times == 1 %}{{award_singular}} {{times}} time{% else %}{{award_plural}} {{times}} times{% endif %} this week! Given by {{sender}}. [info]({{bot_info}}))

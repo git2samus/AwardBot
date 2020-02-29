@@ -1,4 +1,5 @@
 import re, json, random, string
+from jinja2 import Environment, FileSystemLoader
 from modules.shared.base import APIProcess
 from modules.shared.utils import normalize_str
 
@@ -10,6 +11,12 @@ class AwardBotProcess(APIProcess):
 
         # internal variables
         self.subreddit_name = subreddit_name
+
+        # setup templates
+        self.template_env = Environment(
+            loader=FileSystemLoader('templates'),
+            autoescape=False
+        )
 
         # prepare search patterns and keyword info
         negate_char_config = self.reddit.config.custom['bot_negate_char']
@@ -37,7 +44,39 @@ class AwardBotProcess(APIProcess):
         self.keyword_re = re.compile(keyword_pattern)
 
     def add_reply(self, comment, matched_keywords):
-        print(f'@@@ {matched_keywords}')
+        reply = []
+
+        for keyword in sorted(matched_keywords):
+            award_details = self.keyword_mapping[keyword]
+
+            template_name = award_details['template']
+            template = self.template_env.get_template(template_name)
+
+            template_args = self.reddit.config.custom.copy()
+            template_args.update({
+                'sender': comment.author.name,
+                'recipient': 'Samus?',
+                'award_singular': award_details['award_singular'],
+                'award_plural': award_details['award_plural'],
+                'times': 2,
+                'image_url': random.choice(award_details['images']),
+            })
+
+            reply.append(template.render(**template_args))
+
+        print('\n\n---\n\n'.join(reply))
+
+    def process_comment(self, comment):
+        tokens = normalize_str(comment.body).split()
+
+        matches = map(self.keyword_re.fullmatch, tokens)
+        matched_keywords = {
+            match['keyword'] for match in matches
+            if match is not None and match['negated'] is None
+        }
+
+        if matched_keywords:
+            self.add_reply(comment, matched_keywords)
 
     def run(self):
         """Start process"""
@@ -54,13 +93,4 @@ class AwardBotProcess(APIProcess):
         for comment in subreddit.stream.comments(skip_existing=True):
             # Use author.name to avoid another API call
             if normalize_str(comment.author.name) not in blacklist:
-                tokens = normalize_str(comment.body).split()
-
-                matches = map(self.keyword_re.fullmatch, tokens)
-                matched_keywords = {
-                    match['keyword'] for match in matches
-                    if match is not None and match['negated'] is None
-                }
-
-                if matched_keywords:
-                    self.add_reply(comment, matched_keywords)
+                self.process_comment(comment)

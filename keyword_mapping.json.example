@@ -1,11 +1,21 @@
 {
-    "<keyword-1>": [
-        "<img-url1>",
-        "<img-url2>"
-    ],
-    "<keyword-2>": [
-        "<img-url1>",
-        "<img-url2>",
-        "<img-url3>"
-    ]
+    "<keyword>": {
+        "award_singular": "<singular-award-name>",
+        "award_plural": "<singular-award-name>",
+        "template": "<award-tpl>",
+        "images": [
+            "<img-url>",
+            "<img-url>",
+            "<img-url>"
+        ],
+    },
+    "<keyword>": {
+        "award_singular": "<plural-award-name>",
+        "award_plural": "<plural-award-name>",
+        "template": "<award-tpl>",
+        "images": [
+            "<img-url>",
+            "<img-url>"
+        ],
+    }
 }
