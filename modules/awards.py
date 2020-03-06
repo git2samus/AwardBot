@@ -36,14 +36,23 @@ class AwardBotProcess(APIProcess):
 
         punctuation_pattern = '(?:[{}])'.format(re.escape(string.punctuation))
 
-        keyword_pattern = '{negated}?{keyword}{punctuation}?'.format(
+        keyword_pattern = '{negated}?{keyword}{punctuation}*'.format(
             negated=negated_keyword_pattern,
             keyword=keyword_join_pattern,
             punctuation=punctuation_pattern,
         )
         self.keyword_re = re.compile(keyword_pattern)
 
-    def add_reply(self, comment, matched_keywords):
+        username_pattern = '/?u/(?P<username>[-\w]+)'
+        self.username_re = re.compile('{username}{punctuation}*'.format(
+            username=username_pattern,
+            punctuation=punctuation_pattern,
+        ))
+
+    def add_reply(self, comment, matched_keywords, recipient=None):
+        if recipient is None:
+            recipient = comment.parent().author.name
+
         reply = []
 
         for keyword in sorted(matched_keywords):
@@ -55,7 +64,7 @@ class AwardBotProcess(APIProcess):
             template_args = self.reddit.config.custom.copy()
             template_args.update({
                 'sender': comment.author.name,
-                'recipient': 'Samus?',
+                'recipient': recipient,
                 'award_singular': award_details['award_singular'],
                 'award_plural': award_details['award_plural'],
                 'times': 2,
