@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Reddit AwardBot
 
-Usage: award_bot.py <subreddit> [--debug]
+Usage: award_bot.py <subreddit> [--dry] [--debug]
        award_bot.py -h | --help
        award_bot.py --version
 
 Options:
+    --dry                       Run process and write to stdout (do not comment on Reddit)
     --debug                     Enable HTTP debugging
     -h, --help                  Show this screen
 
@@ -46,4 +47,5 @@ if __name__ == '__main__':
     subreddit = args['<subreddit>']
     bot_process = AwardBotProcess(__version__, subreddit)
 
-    bot_process.run()
+    dry_run = args['--dry']
+    bot_process.run(dry_run)

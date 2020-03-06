@@ -11,6 +11,7 @@ class AwardBotProcess(APIProcess):
 
         # internal variables
         self.subreddit_name = subreddit_name
+        self.dry_run = False
 
         # setup templates
         self.template_env = Environment(
@@ -73,22 +74,34 @@ class AwardBotProcess(APIProcess):
 
             reply.append(template.render(**template_args))
 
-        print('\n\n---\n\n'.join(reply))
+        reply_message = '\n\n---\n\n'.join(reply)
+
+        if self.dry_run:
+            print(comment.link_url)
+            print(reply_message)
+        else:
+            comment.reply(reply_message)
 
     def process_comment(self, comment):
-        tokens = normalize_str(comment.body).split()
+        recipient = None
+        matched_keywords = set()
 
-        matches = map(self.keyword_re.fullmatch, tokens)
-        matched_keywords = {
-            match['keyword'] for match in matches
-            if match is not None and match['negated'] is None
-        }
+        tokens = normalize_str(comment.body).split()
+        for token in tokens:
+            username_match = self.username_re.fullmatch(token)
+            if username_match is not None:
+                recipient = username_match['username']
+            else:
+                keyword_match = self.keyword_re.fullmatch(token)
+                if keyword_match is not None and keyword_match['negated'] is None:
+                    matched_keywords.add(keyword_match['keyword'])
 
         if matched_keywords:
-            self.add_reply(comment, matched_keywords)
+            self.add_reply(comment, matched_keywords, recipient)
 
-    def run(self):
+    def run(self, dry_run=False):
         """Start process"""
+        self.dry_run = dry_run
         self.setup_interrupt_handlers()
 
         # ignored users (bots and such)
