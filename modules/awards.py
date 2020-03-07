@@ -54,6 +54,10 @@ class AwardBotProcess(APIProcess):
         if recipient is None:
             recipient = comment.parent().author.name
 
+        sender = comment.author.name
+        if sender == recipient:
+            return # skip
+
         reply = []
 
         for keyword in sorted(matched_keywords):
@@ -64,7 +68,7 @@ class AwardBotProcess(APIProcess):
 
             template_args = self.reddit.config.custom.copy()
             template_args.update({
-                'sender': comment.author.name,
+                'sender': sender,
                 'recipient': recipient,
                 'award_singular': award_details['award_singular'],
                 'award_plural': award_details['award_plural'],
