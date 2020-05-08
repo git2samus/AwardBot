@@ -1,5 +1,5 @@
 Jinja2==2.11.1
 Unidecode==1.1.1
 docopt==0.6.2
-praw==6.4.0
+praw==7.0.0
 psycopg2-binary==2.8.4
